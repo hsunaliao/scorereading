@@ -1,15 +1,15 @@
 <!doctype html>
 <html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>免費樂譜辨識播放器</title><style>
-:root{font-family:system-ui,-apple-system,"Noto Sans TC",sans-serif;color:#16243b;background:#f3f6fb}*{box-sizing:border-box}body{margin:0}header{background:#172a50;color:white;padding:22px max(18px,calc((100vw - 1120px)/2))}h1{font-size:25px;margin:0 0 7px}header p{margin:0;color:#c9d7ee}main{max-width:1120px;margin:24px auto;padding:0 16px 50px}.panel{background:white;border:1px solid #e0e7f1;border-radius:16px;padding:22px;margin-bottom:18px;box-shadow:0 3px 16px #13274a0a}h2{font-size:18px;margin:0 0 14px}.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}button,.file{border:0;border-radius:9px;background:#265cc8;color:white;padding:11px 15px;font:inherit;font-weight:600;cursor:pointer}button.secondary{background:#eaf0fa;color:#1b396b}button:disabled{opacity:.45;cursor:not-allowed}input[type=file]{max-width:100%}input[type=number],select{padding:9px;border:1px solid #cbd5e1;border-radius:8px;background:white;font:inherit}label{display:inline-flex;gap:7px;align-items:center}small,.hint{color:#617089;line-height:1.65}.hint{margin:10px 0 0}.status{padding:11px 13px;background:#eef4ff;border-radius:9px;margin-top:13px;color:#204275}#stage{position:relative;overflow:auto;max-height:640px;border:1px dashed #bac9dc;border-radius:12px;background:#f9fbfe;min-height:170px;touch-action:pan-x pan-y}#canvas{display:block;max-width:none;cursor:crosshair}table{border-collapse:collapse;width:100%;font-size:14px}th,td{border-bottom:1px solid #e5ebf3;padding:8px;text-align:left}th{background:#f5f8fc}td input{width:90px}td select{min-width:92px}.tablewrap{overflow:auto}.pill{font-size:12px;background:#e8f0ff;padding:4px 8px;border-radius:20px;color:#29519b}.footer{font-size:13px;color:#63728c}.two{display:flex;flex-wrap:wrap;gap:12px;align-items:center}#progress{height:7px;background:#e8edf6;border-radius:10px;overflow:hidden;margin-top:12px}#bar{height:100%;width:0;background:#2866d2;transition:width .1s}@media(max-width:600px){.panel{padding:15px}header{padding:20px}h1{font-size:21px}}
-</style></head><body><header><h1>🎼 免費樂譜辨識與播放（高低音譜表・三連音與附點八分音符支援版）</h1><p>不需 Python、不需 API Key｜圖片辨識基本音符・人工修正・瀏覽器直接播放</p></header><main>
-<section class="panel"><h2>① 上傳樂譜圖片</h2><div class="controls"><input id="upload" type="file" accept="image/png,image/jpeg,image/webp"><button id="scan" disabled>自動辨識基本音符</button><button class="secondary" id="clear">清除音符</button></div><p class="hint">建議先用正面拍攝、清楚、水平、單旋律的印刷五線譜測試。手寫譜、和弦、連音、休止符與複雜節奏可能無法正確自動辨識，請使用下方手動修正。辨識只在你的瀏覽器進行，圖片不會上傳伺服器。</p><div id="status" class="status" role="status">請先選擇圖片。</div></section>
-<section class="panel"><h2>② 檢查辨識結果／點圖補音符</h2><div class="controls"><label>點圖模式 <select id="mode"><option value="add">新增音符</option><option value="off">關閉</option></select></label><label>預設時值 <select id="clickDur"><option value="1">四分音符</option><option value="0.5">八分音符</option><option value="0.75">附點八分音符（0.75 拍）</option><option value="0.3333333333333333">八分三連音（1/3 拍）</option><option value="0.6666666666666666">四分三連音（2/3 拍）</option><option value="0.16666666666666666">十六分三連音（1/6 拍）</option><option value="2">二分音符</option><option value="4">全音符</option></select></label><span class="pill" id="staffInfo">尚未偵測五線譜</span></div><div id="clefControls" class="controls" style="margin-top:10px" aria-live="polite"></div><p class="hint">圖片上的紅圈代表自動辨識的音符，藍圈代表手動新增。點選五線譜上的音高位置可補上音符；下方表格可修改 MIDI 音高、時值與排序。每組五線譜可分別設定高音譜號（𝄞）或低音譜號（𝄢），切換後會重新計算圖片上音符的音高。</p><div id="stage"><canvas id="canvas" aria-label="樂譜圖片與辨識音符"></canvas></div></section>
-<section class="panel"><h2>③ 編輯音符與播放</h2><div class="controls"><label>速度 BPM <input type="number" id="bpm" min="30" max="240" value="90" style="width:82px"></label><label>音色 <select id="wave"><option value="sine">柔和</option><option value="triangle">類木管</option><option value="square">電子</option></select></label><button id="play">▶ 播放</button><button class="secondary" id="stop">■ 停止</button><button class="secondary" id="add">＋ 新增音符</button><button class="secondary" id="json">下載 JSON</button><button class="secondary" id="midi">下載 MIDI</button><label class="secondary" style="cursor:pointer">匯入 JSON <input id="import" type="file" accept="application/json,.json" style="width:190px"></label></div><div id="progress"><div id="bar"></div></div><div class="tablewrap"><table><thead><tr><th>#</th><th>音名</th><th>MIDI 音高</th><th>時值（拍）</th><th>來源</th><th>操作</th></tr></thead><tbody id="rows"></tbody></table></div><p class="hint">時值單位：四分音符 = 1 拍、八分音符 = 0.5 拍、附點八分音符 = 0.75 拍、二分音符 = 2 拍；八分三連音 = 1/3 拍（3 個合計 1 拍）、四分三連音 = 2/3 拍（3 個合計 2 拍）、十六分三連音 = 1/6 拍。三連音時值需手動指定，不會從圖片上的「3」自動辨識。此版為單旋律順序播放，未處理同時發聲的和弦或多聲部。</p></section>
+:root{font-family:system-ui,-apple-system,"Noto Sans TC",sans-serif;color:#16243b;background:#f3f6fb}*{box-sizing:border-box}body{margin:0}header{background:#172a50;color:white;padding:22px max(18px,calc((100vw - 1120px)/2))}h1{font-size:25px;margin:0 0 7px}header p{margin:0;color:#c9d7ee}main{max-width:1120px;margin:24px auto;padding:0 16px 50px}.panel{background:white;border:1px solid #e0e7f1;border-radius:16px;padding:22px;margin-bottom:18px;box-shadow:0 3px 16px #13274a0a}h2{font-size:18px;margin:0 0 14px}.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}button,.file{border:0;border-radius:9px;background:#265cc8;color:white;padding:11px 15px;font:inherit;font-weight:600;cursor:pointer}button.secondary{background:#eaf0fa;color:#1b396b}button:disabled{opacity:.45;cursor:not-allowed}input[type=file]{max-width:100%}input[type=number],select{padding:9px;border:1px solid #cbd5e1;border-radius:8px;background:white;font:inherit}label{display:inline-flex;gap:7px;align-items:center}small,.hint{color:#617089;line-height:1.65}.hint{margin:10px 0 0}.status{padding:11px 13px;background:#eef4ff;border-radius:9px;margin-top:13px;color:#204275}#stage{position:relative;overflow:auto;max-height:640px;border:1px dashed #bac9dc;border-radius:12px;background:#f9fbfe;min-height:170px;touch-action:pan-x pan-y}#canvas{display:block;max-width:none;cursor:crosshair}table{border-collapse:collapse;width:100%;font-size:14px}th,td{border-bottom:1px solid #e5ebf3;padding:8px;text-align:left}th{background:#f5f8fc}td input{width:90px}td select{min-width:92px}.selected-note{background:#fff3cf!important}.sync-help{margin:12px 0;padding:12px;border:1px solid #c8d7f2;border-radius:10px;background:#f5f9ff}.sync-help .controls{margin-top:8px}.sync-help strong{color:#214c9c}.tablewrap{overflow:auto}.pill{font-size:12px;background:#e8f0ff;padding:4px 8px;border-radius:20px;color:#29519b}.footer{font-size:13px;color:#63728c}.two{display:flex;flex-wrap:wrap;gap:12px;align-items:center}#progress{height:7px;background:#e8edf6;border-radius:10px;overflow:hidden;margin-top:12px}#bar{height:100%;width:0;background:#2866d2;transition:width .1s}@media(max-width:600px){.panel{padding:15px}header{padding:20px}h1{font-size:21px}}
+</style></head><body><header><h1>🎼 免費樂譜辨識與播放（高低音譜表・三連音・附點偵測・手動聲部同步・小節拍點版）</h1><p>不需 Python、不需 API Key｜圖片辨識基本音符・人工修正・瀏覽器直接播放</p></header><main>
+<section class="panel"><h2>① 上傳樂譜圖片</h2><div class="controls"><input id="upload" type="file" accept="image/png,image/jpeg,image/webp"><button id="scan" disabled>自動辨識基本音符</button><label><input id="detectDots" type="checkbox" checked> 嘗試辨識附點</label><button class="secondary" id="clear">清除音符</button></div><p class="hint">建議先用正面拍攝、清楚、水平、單旋律的印刷五線譜測試。手寫譜、和弦、連音、休止符與複雜節奏可能無法正確自動辨識，請使用下方手動修正。辨識只在你的瀏覽器進行，圖片不會上傳伺服器。</p><div id="status" class="status" role="status">請先選擇圖片。</div></section>
+<section class="panel"><h2>② 檢查辨識結果／點圖補音符</h2><div class="controls"><label>點圖模式 <select id="mode"><option value="add">新增音符</option><option value="pair">選取同步音符</option><option value="barline">標記小節線</option><option value="removebar">刪除小節線</option><option value="off">關閉</option></select></label><label>預設時值 <select id="clickDur"><option value="1">四分音符</option><option value="0.5">八分音符</option><option value="0.75">附點八分音符（0.75 拍）</option><option value="0.3333333333333333">八分三連音（1/3 拍）</option><option value="0.6666666666666666">四分三連音（2/3 拍）</option><option value="0.16666666666666666">十六分三連音（1/6 拍）</option><option value="2">二分音符</option><option value="4">全音符</option></select></label><span class="pill" id="staffInfo">尚未偵測五線譜</span></div><div id="clefControls" class="controls" style="margin-top:10px" aria-live="polite"></div><p class="hint">圖片上的紅圈代表自動辨識的音符，藍圈代表手動新增；疑似附點會標上橘色小點。點選五線譜上的音高位置可補上音符；下方表格可修改 MIDI 音高、時值與排序。每組五線譜可分別設定高音譜號（𝄞）或低音譜號（𝄢），切換後會重新計算圖片上音符的音高。</p><div class="sync-help"><strong>🔗 手動指定上下聲部同時發聲</strong><p class="hint" style="margin:5px 0">將「點圖模式」改為「選取同步音符」，依序點選圖片上的兩個音符標記（或使用下方表格的「選取」按鈕），再按「設為同時發聲」。以第一個音符的開始拍點為準，第二個音符會同步；兩者時值仍可不同。建議先核對音符的譜表及開始拍點。</p><div class="controls"><span class="pill" id="pairInfo">尚未選取音符</span><button id="pairApply" disabled>🔗 設為同時發聲</button><button id="pairClear" class="secondary">取消選取</button><button id="pairReset" class="secondary" disabled>解除選取音符的手動拍點</button></div></div><div class="sync-help"><strong>📏 點選小節線，自動編列小節號碼</strong><p class="hint">先完成五線譜辨識，再將「點圖模式」改成「標記小節線」，點選圖片上每一條小節線。程式會在每個系統上方標示第 1、2、3… 小節；上下譜表共用同一組小節號。選「刪除小節線」可移除誤點。多行樂譜會由上到下接續編號。標記完成後，按「依小節線更新音符位置」，可依圖片上的小節位置重排表格時間。<strong>不會覆蓋已手動設定的拍點</strong>；無法辨識休止符與複雜複音節奏，請逐一核對。</p><div class="controls"><span class="pill" id="barInfo">尚未標記小節線</span><button id="clearBars" class="secondary">清除全部小節線</button><button id="repositionNotes">依小節線更新音符位置</button><button id="undoReposition" class="secondary" disabled>復原上次更新</button></div></div><div id="stage"><canvas id="canvas" aria-label="樂譜圖片與辨識音符"></canvas></div></section>
+<section class="panel"><h2>③ 編輯音符與播放</h2><div class="controls"><label>拍號 <select id="meter"><option value="4/4">4/4</option><option value="3/4">3/4</option><option value="2/4">2/4</option><option value="2/2">2/2</option><option value="6/8">6/8</option><option value="9/8">9/8</option><option value="12/8">12/8</option><option value="5/4">5/4</option><option value="7/4">7/4</option><option value="7/8">7/8</option></select></label><label>速度 BPM <input type="number" id="bpm" min="30" max="240" value="90" style="width:82px"></label><label>播放方式 <select id="playMode"><option value="sync">高低音同步</option><option value="sequential">原始依序播放</option><option value="upper">只播高音譜表</option><option value="lower">只播低音譜表</option></select></label><label>音色 <select id="wave"><option value="sine">柔和</option><option value="triangle">類木管</option><option value="square">電子</option></select></label><button id="play">▶ 播放</button><button class="secondary" id="stop">■ 停止</button><button class="secondary" id="add">＋ 新增音符</button><button class="secondary" id="json">下載 JSON</button><button class="secondary" id="midi">下載 MIDI</button><label class="secondary" style="cursor:pointer">匯入 JSON <input id="import" type="file" accept="application/json,.json" style="width:190px"></label></div><div class="controls" style="margin:12px 0"><label><input id="autoRhythm" type="checkbox" checked> 修改時值後，自動重算同聲部的小節內拍點</label><button class="secondary" id="recalcRhythm">重新計算未鎖定音符拍點</button><span class="pill" id="rhythmInfo">依小節線及各聲部獨立排列</span></div><div id="progress"><div id="bar"></div></div><div class="tablewrap"><table><thead><tr><th>#</th><th>音名</th><th>MIDI 音高</th><th>時值（拍）</th><th>譜表</th><th>開始小節</th><th>小節內第幾拍</th><th>來源</th><th>操作</th></tr></thead><tbody id="rows"></tbody></table></div><p class="hint">自動重算只會移動未鎖定音符；手動輸入小節／拍點及配對同步的音符視為鎖定。若要讓它跟著重算，請先選取該音符並按「解除選取音符的手動拍點」。小節內有休止符、重疊聲部或跨小節延音時，仍須人工校對。</p><p class="hint">時值單位：四分音符 = 1 拍、八分音符 = 0.5 拍、附點八分音符 = 0.75 拍、二分音符 = 2 拍；八分三連音 = 1/3 拍（3 個合計 1 拍）、四分三連音 = 2/3 拍（3 個合計 2 拍）、十六分三連音 = 1/6 拍。附點偵測僅供提示：疑似附點會暫設為附點八分音符（0.75 拍），但程式無法可靠判定原本音符是八分、四分或其他時值，請逐一核對；三連音時值仍需手動指定。新版可依高低音譜表同步播放。開始時間改用「第幾小節、第幾拍」輸入（每小節第一拍為 1）；例如 4/4 的第 3 小節第 2.5 拍。6/8 等拍號以八分音符為一拍；2/2、5/4、7/4 也可選擇，播放內部仍以四分音符計時；自動辨識無法可靠識別休止符、連線與小節，因此請核對開始拍點。</p></section>
 <p class="footer">開源式純前端示範版本：無第三方服務、無需後端。自動辨識屬於簡易啟發式演算法，並非完整專業 OMR；請核對所有結果後再播放。</p></main>
 <script>
 'use strict';
 const $=id=>document.getElementById(id), canvas=$('canvas'),ctx=canvas.getContext('2d',{willReadFrequently:true});
-let original=null,notes=[],staves=[],audio=null,oscillators=[],playing=false,playToken=0;
+let original=null,notes=[],staves=[],barlines=[],audio=null,oscillators=[],playing=false,playToken=0,pairSelection=[];
 const setStatus=s=>$('status').textContent=s;
 const pitchName=n=>{let a=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];return a[((n%12)+12)%12]+(Math.floor(n/12)-1)};
 // Diatonic pitch from the bottom line: treble E4=64, bass G2=43.
@@ -20,6 +20,7 @@ function draw(){
   if(!original)return;
   canvas.width=original.width;canvas.height=original.height;
   ctx.drawImage(original,0,0);
+  drawBarNumbers();
   notes.forEach((n,i)=>{
     if(n.x==null||n.y==null)return;
     // Use each detected staff's line spacing, never the overall image width.
@@ -28,17 +29,199 @@ function draw(){
     const radius=Math.max(3,Math.min(13,spacing*.33));
     ctx.save();
     ctx.beginPath();ctx.ellipse(n.x,n.y,radius,radius*.78,-.28,0,Math.PI*2);
-    ctx.strokeStyle=n.source==='手動'?'rgba(23,105,223,.78)':'rgba(227,58,58,.78)';
-    ctx.lineWidth=Math.max(1,Math.min(2.2,spacing*.09));ctx.stroke();
+    ctx.strokeStyle=pairSelection.includes(n)?'#e09b00':(n.source==='手動'?'rgba(23,105,223,.78)':'rgba(227,58,58,.78)');
+    ctx.lineWidth=pairSelection.includes(n)?Math.max(3,spacing*.19):Math.max(1,Math.min(2.2,spacing*.09));ctx.stroke();
     ctx.fillStyle=n.source==='手動'?'#1769df':'#b52b2b';
     ctx.font=`600 ${Math.max(9,Math.min(15,spacing*.55))}px sans-serif`;
     ctx.fillText(String(i+1),n.x+radius+2,n.y-radius-2);
+    if(n.dot){ctx.fillStyle='#ef8a19';ctx.beginPath();ctx.arc(n.dot.x,n.dot.y,Math.max(2,spacing*.13),0,Math.PI*2);ctx.fill();}
     ctx.restore();
   });
 }
-function render(){const tb=$('rows');tb.replaceChildren();notes.forEach((n,i)=>{let tr=document.createElement('tr');let idx=document.createElement('td');idx.textContent=i+1;tr.append(idx);let name=document.createElement('td');name.textContent=pitchName(n.pitch);tr.append(name);let pitch=document.createElement('td'),p=document.createElement('input');p.type='number';p.min=21;p.max=108;p.value=n.pitch;p.setAttribute('aria-label','MIDI 音高');p.onchange=()=>{n.pitch=Math.max(21,Math.min(108,Number(p.value)||60));render()};pitch.append(p);tr.append(pitch);let dur=document.createElement('td'),d=document.createElement('select');for(let [v,t] of [['0.16666666666666666','十六分三連音'],['0.25','十六分'],['0.3333333333333333','八分三連音'],['0.5','八分'],['0.75','附點八分'],['0.6666666666666666','四分三連音'],['1','四分'],['1.5','附點四分'],['2','二分'],['3','附點二分'],['4','全音符']]){let o=document.createElement('option');o.value=v;o.textContent=`${t} (${v})`;d.append(o)}d.value=String(n.duration);d.onchange=()=>{n.duration=Number(d.value)};dur.append(d);tr.append(dur);let src=document.createElement('td');src.textContent=n.source;tr.append(src);let ops=document.createElement('td');for(let [txt,fn] of [['↑',()=>swap(i,i-1)],['↓',()=>swap(i,i+1)],['刪除',()=>{notes.splice(i,1);render()}]]){let b=document.createElement('button');b.className='secondary';b.textContent=txt;b.style.padding='6px 9px';b.style.margin='2px';b.onclick=fn;ops.append(b)}tr.append(ops);tb.append(tr)});draw();}
+function systemCount(){return Math.max(1,Math.ceil(staves.length/2))}
+function systemBounds(sys){const a=staves[sys*2],b=staves[sys*2+1]||a;return a?{top:a.top,bottom:b.bottom,spacing:a.spacing}:null}
+function systemAtY(y){if(!staves.length)return -1;let best=0,dist=Infinity;for(let sys=0;sys<systemCount();sys++){const b=systemBounds(sys);const d=y<b.top?b.top-y:y>b.bottom?y-b.bottom:0;if(d<dist){dist=d;best=sys}}return best}
+function systemBars(sys){return barlines.filter(b=>b.system===sys).sort((a,b)=>a.x-b.x)}
+function updateBarInfo(){const el=$('barInfo');if(el)el.textContent=`已標記 ${barlines.length} 條小節線，編列 ${barlines.length+systemCount()} 個小節（依系統分段）`}
+function drawBarNumbers(){if(!staves.length)return;let next=1;for(let sys=0;sys<systemCount();sys++){const bounds=systemBounds(sys),bars=systemBars(sys);const left=Math.max(4,Math.min(original.width*.12,...notes.filter(n=>staffOf(n)===sys*2||staffOf(n)===sys*2+1).map(n=>n.x??original.width*.12))-bounds.spacing*2);const xs=[left,...bars.map(b=>b.x)];ctx.save();ctx.font=`bold ${Math.max(12,Math.min(20,bounds.spacing*.8))}px sans-serif`;ctx.textBaseline='bottom';xs.forEach((x,i)=>{const label=String(next++);const tx=Math.max(4,Math.min(original.width-35,x+5));const ty=Math.max(18,bounds.top-bounds.spacing*.85);const w=ctx.measureText(label).width;ctx.fillStyle='rgba(255,255,255,.9)';ctx.fillRect(tx-3,ty-ctx.measureText('M').actualBoundingBoxAscent-4,w+6,20);ctx.fillStyle='#174baf';ctx.fillText(label,tx,ty)});bars.forEach(b=>{ctx.strokeStyle='#d97706';ctx.lineWidth=2;ctx.setLineDash([6,4]);ctx.beginPath();ctx.moveTo(b.x,bounds.top-8);ctx.lineTo(b.x,bounds.bottom+8);ctx.stroke()});ctx.restore()}}
+$('clearBars').onclick=()=>{barTimingEnabled=false;barlines=[];updateBarInfo();draw();setStatus('已清除全部小節線標記；原本音符的拍點沒有變動。')};
+
+// Align note times to marked barline boundaries without altering manual synchronizations.
+let repositionSnapshot=null;
+function repositionByBarlines(){
+ if(!original||!staves.length||!barlines.length){setStatus('請先辨識五線譜，並在圖片上標記小節線。');return}
+ const meter=meterInfo(),barLength=meter.quarterPerBar;
+ if(!confirm('將依圖片上的小節線更新「未手動指定」音符的小節與拍點。已手動指定的音符（包括同步配對）不變。建議先下載 JSON 備份。是否繼續？'))return;
+ repositionSnapshot=notes.map(n=>({n,startBeat:n.startBeat,timeManual:n.timeManual}));
+ let changed=0,skipped=0,overflow=0,unpositioned=0,barOffset=0;
+ for(let sys=0;sys<systemCount();sys++){
+  const bars=systemBars(sys),numBars=bars.length+1;
+  const members=notes.filter(n=>Math.floor(staffOf(n)/2)===sys&&Number.isFinite(n.x));
+  for(let local=0;local<numBars;local++){
+   const left=local?bars[local-1].x:-Infinity,right=local<bars.length?bars[local].x:Infinity;
+   const barStart=(barOffset+local)*barLength;
+   for(let staff=sys*2;staff<Math.min(staves.length,sys*2+2);staff++){
+    const group=members.filter(n=>staffOf(n)===staff&&n.x>=left&&n.x<right).sort((a,b)=>a.x-b.x);
+    let cursor=barStart,prevX=null,prevStart=barStart;
+    const tolerance=Math.max(2,(staves[staff]?.spacing||12)*.35);
+    for(const n of group){
+     const duration=Math.max(1/12,Number(n.duration)||1);
+     if(n.timeManual){skipped++;cursor=Math.max(cursor,Number(n.startBeat)||0);prevStart=Number(n.startBeat)||0;prevX=n.x;cursor=Math.max(cursor,prevStart+duration);continue}
+     // Vertically stacked noteheads can share an onset (simple chord handling).
+     const simultaneous=prevX!==null&&Math.abs(n.x-prevX)<=tolerance;
+     const start=simultaneous?prevStart:cursor;
+     n.startBeat=start;n.timeManual=false;changed++;
+     if(start>=barStart+barLength-1e-7)overflow++;
+     prevStart=start;prevX=n.x;cursor=Math.max(cursor,start+duration);
+    }
+   }
+  }
+  barOffset+=numBars;
+ }
+ unpositioned=notes.filter(n=>!Number.isFinite(n.x)).length;
+ $('undoReposition').disabled=false;
+ render();
+ setStatus(`已依小節線更新 ${changed} 個音符；保留 ${skipped} 個手動拍點。${overflow?'注意：'+overflow+' 個音符因時值累計超出所屬小節，請檢查休止符、時值及同步設定。':''}${unpositioned?'另有 '+unpositioned+' 個沒有圖片座標的音符未定位。':''} 可按「復原上次更新」還原。`);
+}
+$('repositionNotes').onclick=repositionByBarlines;
+$('undoReposition').onclick=()=>{
+ if(!repositionSnapshot)return;
+ for(const old of repositionSnapshot){if(notes.includes(old.n)){old.n.startBeat=old.startBeat;old.n.timeManual=old.timeManual}}
+ repositionSnapshot=null;barTimingEnabled=false;$('undoReposition').disabled=true;render();setStatus('已復原上次依小節線更新前的音符時間。');
+};
+
+function staffOf(n){if(Number.isInteger(n.staffIndex))return n.staffIndex;return n.y!=null&&staves.length?staves.indexOf(nearestStaff(n.y)):0}
+// Recalculate unlocked notes within each marked measure and staff.
+// Manual times are anchors; other voices are independent. Same-x notes form a chord.
+let barTimingEnabled=false;
+function recalcBarTiming(){
+ if(!staves.length || !barlines.length)return false;
+ const barLength=meterInfo().quarterPerBar;
+ let offset=0,overflow=0;
+ for(let sys=0;sys<systemCount();sys++){
+  const bars=systemBars(sys),numBars=bars.length+1;
+  for(let local=0;local<numBars;local++){
+   const left=local?bars[local-1].x:-Infinity,right=local<bars.length?bars[local].x:Infinity;
+   const barStart=(offset+local)*barLength;
+   for(let staff=sys*2;staff<Math.min(staves.length,sys*2+2);staff++){
+    const group=notes.filter(n=>staffOf(n)===staff&&Number.isFinite(n.x)&&n.x>=left&&n.x<right).sort((a,b)=>a.x-b.x);
+    let cursor=barStart,prevX=null,prevStart=barStart;
+    const tolerance=Math.max(2,(staves[staff]?.spacing||12)*.35);
+    for(const n of group){
+     const duration=Math.max(1/12,Number(n.duration)||1);
+     const simultaneous=prevX!==null&&Math.abs(n.x-prevX)<=tolerance;
+     const onset=n.timeManual?Math.max(0,Number(n.startBeat)||0):(simultaneous?prevStart:cursor);
+     if(!n.timeManual)n.startBeat=onset;
+     if(onset>=barStart+barLength-1e-7)overflow++;
+     prevStart=onset;prevX=n.x;
+     cursor=Math.max(cursor,onset+duration);
+    }
+   }
+  }
+  offset+=numBars;
+ }
+ $('rhythmInfo').textContent=overflow?`有 ${overflow} 個音符超出標記的小節，請核對時值／休止符`:'已依小節線更新未鎖定音符的拍點';
+ return true;
+}
+function assignTiming(){
+ if(barTimingEnabled&&barlines.length&&recalcBarTiming())return;
+ let base=0;
+ const systems=Math.max(1,Math.ceil(staves.length/2));
+ for(let sys=0;sys<systems;sys++){
+  let ends=[];
+  for(let staff=sys*2;staff<Math.min(staves.length,sys*2+2);staff++){
+   let cursor=base;
+   notes.filter(n=>staffOf(n)===staff).sort((a,b)=>(a.x??1e9)-(b.x??1e9)).forEach(n=>{
+    if(!n.timeManual)n.startBeat=cursor;
+    cursor=Math.max(cursor,Number(n.startBeat)||0)+Math.max(1/12,Number(n.duration)||1);
+   });
+   ends.push(cursor);
+  }
+  base=Math.max(base,...ends);
+ }
+ if(!staves.length){let cursor=0;notes.forEach(n=>{if(!n.timeManual)n.startBeat=cursor;cursor=(Number(n.startBeat)||0)+Math.max(1/12,Number(n.duration)||1)})}
+}
+$('recalcRhythm').onclick=()=>{barTimingEnabled=true;render();setStatus(barlines.length?'已重算未鎖定音符的小節內拍點。手動指定的拍點保持不變。':'請先標記小節線，再重新計算。')};
+
+function updatePairInfo(){
+ const indexes=pairSelection.map(n=>notes.indexOf(n)+1).filter(i=>i>0);
+ $('pairInfo').textContent=indexes.length?`已選：${indexes.map(i=>'音符 '+i).join(' → ')}${indexes.length===1?'（請再選一個）':''}`:'尚未選取音符';
+ $('pairApply').disabled=indexes.length!==2;
+ $('pairReset').disabled=indexes.length===0;
+}
+function selectPairNote(n){
+ if(!notes.includes(n))return;
+ if(pairSelection.includes(n)){pairSelection=pairSelection.filter(x=>x!==n)}
+ else if(pairSelection.length>=2){pairSelection=[n]}
+ else pairSelection.push(n);
+ updatePairInfo();render();
+}
+$('pairClear').onclick=()=>{pairSelection=[];updatePairInfo();render()};
+$('pairApply').onclick=()=>{
+ if(pairSelection.length!==2)return;
+ const [anchor,target]=pairSelection;
+ if(staffOf(anchor)===staffOf(target)){setStatus('目前選取的兩個音符屬於同一譜表；請確認是否要跨聲部同步。仍可按此功能設定同拍，但請先選擇不同譜表。');return}
+ const beat=Math.max(0,Number(anchor.startBeat)||0);
+ anchor.startBeat=beat;target.startBeat=beat;anchor.timeManual=true;target.timeManual=true;
+ pairSelection=[];render();setStatus(`同步設定完成：兩個音符均從第 ${beatToBarPosition(beat).bar} 小節第 ${fmtBeat(beatToBarPosition(beat).position)} 拍開始。可在表格繼續調整拍點。`);
+};
+$('pairReset').onclick=()=>{pairSelection.forEach(n=>{n.timeManual=false});pairSelection=[];render();setStatus('已解除選取音符的手動開始拍點，恢復自動推算。')};
+function meterInfo(){const [num,den]=$('meter').value.split('/').map(Number);return {num,den,quarterPerUnit:4/den,quarterPerBar:num*4/den}}
+function beatToBarPosition(beat){const m=meterInfo(),total=Math.max(0,Number(beat)||0);let bar=Math.floor((total+1e-8)/m.quarterPerBar)+1;let offset=total-(bar-1)*m.quarterPerBar;return {bar,position:1+offset/m.quarterPerUnit}}
+function barPositionToBeat(bar,position){const m=meterInfo();return (bar-1)*m.quarterPerBar+(position-1)*m.quarterPerUnit}
+function fmtBeat(n){return String(Number(n.toFixed(5)))}
+$('meter').onchange=()=>{if(barlines.length)barTimingEnabled=true;render();setStatus('拍號已切換，表格的小節與拍點會重新換算；請確認樂譜的實際拍號。')};
+function render(){assignTiming();updatePairInfo();const tb=$('rows');tb.replaceChildren();notes.forEach((n,i)=>{let tr=document.createElement('tr');if(pairSelection.includes(n))tr.className='selected-note';let idx=document.createElement('td');idx.textContent=i+1;tr.append(idx);let name=document.createElement('td');name.textContent=pitchName(n.pitch);tr.append(name);let pitch=document.createElement('td'),p=document.createElement('input');p.type='number';p.min=21;p.max=108;p.value=n.pitch;p.setAttribute('aria-label','MIDI 音高');p.onchange=()=>{n.pitch=Math.max(21,Math.min(108,Number(p.value)||60));render()};pitch.append(p);tr.append(pitch);let dur=document.createElement('td'),d=document.createElement('select');for(let [v,t] of [['0.16666666666666666','十六分三連音'],['0.25','十六分'],['0.3333333333333333','八分三連音'],['0.5','八分'],['0.75','附點八分'],['0.6666666666666666','四分三連音'],['1','四分'],['1.5','附點四分'],['2','二分'],['3','附點二分'],['4','全音符']]){let o=document.createElement('option');o.value=v;o.textContent=`${t} (${v})`;d.append(o)}d.value=String(n.duration);d.onchange=()=>{n.duration=Number(d.value);n.dot=null;n.dotHint=false;if($('autoRhythm').checked&&barlines.length)barTimingEnabled=true;render();setStatus(barlines.length?'已依小節線重算同聲部未鎖定音符的拍點；請核對休止符與跨小節音符。':'已更新時值；若要按小節排列，請先標記小節線。')};dur.append(d);tr.append(dur);
+ let staffTd=document.createElement('td'),staffSel=document.createElement('select');
+ const count=Math.max(2,staves.length);
+ for(let k=0;k<count;k++){let o=document.createElement('option');o.value=k;o.textContent=`${k+1} ${k%2===0?'高音':'低音'}`;staffSel.append(o)}
+ staffSel.value=String(staffOf(n));staffSel.onchange=()=>{n.staffIndex=Number(staffSel.value);n.timeManual=false;render()};staffTd.append(staffSel);tr.append(staffTd);
+ let pos=beatToBarPosition(n.startBeat);
+ let barTd=document.createElement('td'),barInput=document.createElement('input');barInput.type='number';barInput.min='1';barInput.step='1';barInput.value=pos.bar;barInput.style.width='72px';barInput.setAttribute('aria-label','開始小節');barTd.append(barInput);tr.append(barTd);
+ let timeTd=document.createElement('td'),timeInput=document.createElement('input');timeInput.type='number';timeInput.min='1';timeInput.step='any';timeInput.value=fmtBeat(pos.position);timeInput.style.width='88px';timeInput.setAttribute('aria-label','小節內第幾拍');timeTd.append(timeInput);tr.append(timeTd);
+ const applyPosition=()=>{const m=meterInfo(),bar=Number(barInput.value),position=Number(timeInput.value);if(!Number.isInteger(bar)||bar<1||!Number.isFinite(position)||position<1||position>=m.num+1){setStatus(`請輸入有效的小節（1 以上整數）與拍點（1 至小於 ${m.num+1}）。`);render();return}n.startBeat=barPositionToBeat(bar,position);n.timeManual=true;render()};barInput.onchange=applyPosition;timeInput.onchange=applyPosition;
+ let src=document.createElement('td');src.textContent=n.source+(n.dotHint?'・疑似附點（請核對）':'');tr.append(src);let ops=document.createElement('td');for(let [txt,fn] of [['選取',()=>selectPairNote(n)],['↑',()=>swap(i,i-1)],['↓',()=>swap(i,i+1)],['刪除',()=>{notes.splice(i,1);render()}]]){let b=document.createElement('button');b.className='secondary';b.textContent=txt;b.style.padding='6px 9px';b.style.margin='2px';b.onclick=fn;ops.append(b)}tr.append(ops);tb.append(tr)});draw();}
 function swap(a,b){if(b<0||b>=notes.length)return;[notes[a],notes[b]]=[notes[b],notes[a]];render()}
-$('upload').onchange=e=>{let f=e.target.files[0];if(!f)return;if(!f.type.startsWith('image/')){setStatus('請選擇圖片檔案。');return}let url=URL.createObjectURL(f),img=new Image();img.onload=()=>{let scale=Math.min(1,1800/img.width,1800/img.height);let c=document.createElement('canvas');c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext('2d').drawImage(img,0,0,c.width,c.height);original=c;notes=[];staves=[];$('scan').disabled=false;$('staffInfo').textContent='尚未偵測五線譜';updateClefControls();render();setStatus(`已載入 ${f.name}（${c.width} × ${c.height}），請按「自動辨識基本音符」。`);URL.revokeObjectURL(url)};img.onerror=()=>{setStatus('圖片無法開啟。');URL.revokeObjectURL(url)};img.src=url};
+$('upload').onchange=e=>{let f=e.target.files[0];if(!f)return;if(!f.type.startsWith('image/')){setStatus('請選擇圖片檔案。');return}let url=URL.createObjectURL(f),img=new Image();img.onload=()=>{let scale=Math.min(1,1800/img.width,1800/img.height);let c=document.createElement('canvas');c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext('2d').drawImage(img,0,0,c.width,c.height);original=c;notes=[];staves=[];barlines=[];barTimingEnabled=false;updateBarInfo();$('scan').disabled=false;pairSelection=[];$('staffInfo').textContent='尚未偵測五線譜';updateClefControls();render();setStatus(`已載入 ${f.name}（${c.width} × ${c.height}），請按「自動辨識基本音符」。`);URL.revokeObjectURL(url)};img.onerror=()=>{setStatus('圖片無法開啟。');URL.revokeObjectURL(url)};img.src=url};
+// Detect small, isolated ink components to the right of a candidate notehead.
+// This is an uncertain visual hint, NOT reliable rhythmic notation recognition.
+function possibleDot(dark,w,h,staff,x,y){
+  const sp=staff.spacing;
+  // Dot should lie immediately to the right of the notehead, at similar height.
+  const left=Math.max(0,Math.round(x+sp*.48));
+  const right=Math.min(w-1,Math.round(x+sp*1.38));
+  const top=Math.max(0,Math.round(y-sp*.38));
+  const bottom=Math.min(h-1,Math.round(y+sp*.38));
+  if(right<=left||bottom<=top)return null;
+  const visited=new Uint8Array((right-left+1)*(bottom-top+1));
+  const rw=right-left+1;
+  const index=(xx,yy)=>(yy-top)*rw+(xx-left);
+  for(let yy=top;yy<=bottom;yy++)for(let xx=left;xx<=right;xx++){
+    const i=index(xx,yy);
+    if(visited[i]||!dark[yy*w+xx])continue;
+    const queue=[[xx,yy]];visited[i]=1;
+    let head=0,count=0,minX=xx,maxX=xx,minY=yy,maxY=yy,sx=0,sy=0,touches=false;
+    while(head<queue.length){
+      const [cx,cy]=queue[head++];count++;sx+=cx;sy+=cy;
+      minX=Math.min(minX,cx);maxX=Math.max(maxX,cx);minY=Math.min(minY,cy);maxY=Math.max(maxY,cy);
+      if(cx===left||cx===right||cy===top||cy===bottom)touches=true;
+      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+        if(!dx&&!dy)continue;let nx=cx+dx,ny=cy+dy;
+        if(nx<left||nx>right||ny<top||ny>bottom)continue;
+        let ni=index(nx,ny);if(!visited[ni]&&dark[ny*w+nx]){visited[ni]=1;queue.push([nx,ny]);}
+      }
+    }
+    const bw=maxX-minX+1,bh=maxY-minY+1;
+    const midX=sx/count,midY=sy/count;
+    const lineNear=staff.lines.some(line=>Math.abs(midY-line)<Math.max(1.5,sp*.12));
+    if(!touches&&!lineNear&&bw>=1&&bh>=1&&bw<=sp*.36&&bh<=sp*.36&&
+       bw/bh>=.55&&bw/bh<=1.8&&count>=Math.max(2,sp*sp*.012)&&
+       count/(bw*bh)>=.4&&midX>x+sp*.5&&Math.abs(midY-y)<sp*.32){
+      return {x:Math.round(midX),y:Math.round(midY)};
+    }
+  }
+  return null;
+}
 function detect(){if(!original)return;const w=original.width,h=original.height;let data=original.getContext('2d').getImageData(0,0,w,h).data;let dark=new Uint8Array(w*h),row=new Float32Array(h);for(let y=0;y<h;y++){let cnt=0;for(let x=0;x<w;x++){let k=(y*w+x)*4,g=.299*data[k]+.587*data[k+1]+.114*data[k+2];if(g<145){dark[y*w+x]=1;cnt++}}row[y]=cnt/w}// Robust staff detection: scan several horizontal regions, not just the entire image width.
 // Photos often have margins, short systems, uneven lighting and thick handwritten lines.
 // Score complete five-line sets, then suppress overlapping candidates globally.
@@ -85,17 +268,68 @@ for(const g of candidatesGroups){
  groups.push(g);
 }
 groups.sort((a,b)=>a.top-b.top);
-staves=groups;staves.forEach((s,i)=>s.clef=(i===1?'bass':'treble'));updateClefControls();$('staffInfo').textContent=`偵測到 ${groups.length} 組五線譜`;
+staves=groups;barlines=[];barTimingEnabled=false;updateBarInfo();staves.forEach((s,i)=>s.clef=(i===1?'bass':'treble'));updateClefControls();$('staffInfo').textContent=`偵測到 ${groups.length} 組五線譜`;
 if(!groups.length){setStatus('仍未偵測到完整五線譜。請先裁切多餘背景、將樂譜旋轉至水平、提高對比再試；也可以用下方新增音符手動輸入。');render();return}
 let found=[];for(let staff of groups){let sp=staff.spacing;let xStart=Math.round(w*.05),xEnd=Math.round(w*.98);let candidates=[];let rx=Math.max(3,Math.round(sp*.52)),ry=Math.max(2,Math.round(sp*.38));for(let x=xStart+rx;x<xEnd-rx;x+=Math.max(2,Math.round(sp*.24))){for(let y=Math.max(ry,Math.round(staff.top-2*sp));y<Math.min(h-ry,Math.round(staff.bottom+2*sp));y+=Math.max(2,Math.round(sp*.23))){let filled=0,total=0,center=0;for(let dy=-ry;dy<=ry;dy++)for(let dx=-rx;dx<=rx;dx++){if((dx*dx)/(rx*rx)+(dy*dy)/(ry*ry)>1)continue;let yy=y+dy,xx=x+dx;if(yy<0||xx<0||yy>=h||xx>=w)continue;let isLine=staff.lines.some(l=>Math.abs(l-yy)<=1);if(isLine)continue;total++;if(dark[yy*w+xx])filled++;if(Math.abs(dx)<rx*.5&&Math.abs(dy)<ry*.5&&dark[yy*w+xx])center++}let score=filled/Math.max(1,total);if(score>.52&&center>rx*ry*.3)candidates.push({x,y,score})}}
 candidates.sort((a,b)=>b.score-a.score);let picked=[];for(let p of candidates){if(picked.some(q=>Math.abs(q.x-p.x)<sp*.9&&Math.abs(q.y-p.y)<sp*.65))continue;picked.push(p);if(picked.length>120)break}for(let p of picked){let pitch=staffPitch(staff,p.y);
-if(pitch<36||pitch>96)continue;found.push({pitch,duration:1,x:p.x,y:p.y,source:'自動'})}}
-found.sort((a,b)=>a.x-b.x||a.y-b.y);notes=found;render();setStatus(`已找到 ${groups.length} 組五線譜、${found.length} 個「疑似」音符。每組譜號已提供選單（第一組高音、第二組低音），請核對後再播放。目前無法可靠地從圖片自動辨識譜號圖形，請使用每組五線譜旁的選單確認高／低音譜號；再核對音高與時值。`)}
+if(pitch<36||pitch>96)continue;const dot=$('detectDots').checked?possibleDot(dark,w,h,staff,p.x,p.y):null;found.push({pitch,duration:dot?0.75:1,x:p.x,y:p.y,staffIndex:groups.indexOf(staff),source:'自動',dot,dotHint:!!dot})}}
+found.sort((a,b)=>a.x-b.x||a.y-b.y);notes=found;pairSelection=[];render();const dotCount=found.filter(n=>n.dotHint).length;setStatus(`疑似附點 ${dotCount} 個（暫設 0.75 拍，需人工確認）；已找到 ${groups.length} 組五線譜、${found.length} 個「疑似」音符。每組譜號已提供選單（第一組高音、第二組低音），請核對後再播放。目前無法可靠地從圖片自動辨識譜號圖形，請使用每組五線譜旁的選單確認高／低音譜號；再核對音高與時值。`)}
 $('scan').onclick=()=>{setStatus('正在本機辨識…');setTimeout(detect,30)};
-canvas.addEventListener('click',e=>{if(!original||$('mode').value!=='add')return;let r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*canvas.width/r.width,y=(e.clientY-r.top)*canvas.height/r.height;if(!staves.length){setStatus('請先按「自動辨識基本音符」以定位五線譜；若偵測失敗可用下方「新增音符」直接輸入 MIDI 音高。');return}let s=staves.reduce((a,b)=>Math.abs((a.top+a.bottom)/2-y)<Math.abs((b.top+b.bottom)/2-y)?a:b);let pitch=staffPitch(s,y);notes.push({pitch:Math.max(21,Math.min(108,pitch)),duration:Number($('clickDur').value),x:Math.round(x),y:Math.round(y),source:'手動'});notes.sort((a,b)=>(a.x??1e9)-(b.x??1e9));render()});
-$('clear').onclick=()=>{stop();notes=[];render();setStatus('已清除音符。')};$('add').onclick=()=>{notes.push({pitch:60,duration:1,x:null,y:null,source:'手動'});render()};
+canvas.addEventListener('click',e=>{if(!original||$('mode').value==='off')return;let r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*canvas.width/r.width,y=(e.clientY-r.top)*canvas.height/r.height;if($('mode').value==='barline'||$('mode').value==='removebar'){
+ if(!staves.length){setStatus('請先按「自動辨識基本音符」，才能標記小節線。');return}
+ const sys=systemAtY(y),bounds=systemBounds(sys);
+ if(y<bounds.top-bounds.spacing*3||y>bounds.bottom+bounds.spacing*3){setStatus('請點在五線譜附近的小節線上。');return}
+ if($('mode').value==='barline'){
+  const tolerance=Math.max(6,bounds.spacing*.45);
+  if(barlines.some(b=>b.system===sys&&Math.abs(b.x-x)<tolerance)){setStatus('此處附近已經有小節線標記。');return}
+  barlines.push({system:sys,x:Math.round(x)});setStatus('已標記小節線；藍色數字會自動更新。');
+ }else{
+  const matches=barlines.map((b,i)=>({i,dist:b.system===sys?Math.abs(b.x-x):Infinity})).sort((a,b)=>a.dist-b.dist);
+  if(!matches.length||matches[0].dist>Math.max(15,bounds.spacing)){setStatus('附近找不到可刪除的小節線。');return}
+  barlines.splice(matches[0].i,1);setStatus('已刪除一條小節線標記。');
+ }
+ updateBarInfo();draw();return;
+ }if($('mode').value==='pair'){let candidates=notes.filter(n=>n.x!=null&&n.y!=null).map(n=>({n,dist:Math.hypot(n.x-x,n.y-y)})).sort((a,b)=>a.dist-b.dist);let near=candidates[0];let staff=staves.length?nearestStaff(y):null;let threshold=Math.max(12,(staff?.spacing||12)*.9);if(near&&near.dist<=threshold)selectPairNote(near.n);else setStatus('沒有點到音符標記；請點選音符旁的數字或改用表格「選取」。');return}if(!staves.length){setStatus('請先按「自動辨識基本音符」以定位五線譜；若偵測失敗可用下方「新增音符」直接輸入 MIDI 音高。');return}let s=staves.reduce((a,b)=>Math.abs((a.top+a.bottom)/2-y)<Math.abs((b.top+b.bottom)/2-y)?a:b);let pitch=staffPitch(s,y);notes.push({pitch:Math.max(21,Math.min(108,pitch)),duration:Number($('clickDur').value),x:Math.round(x),y:Math.round(y),source:'手動',staffIndex:staves.indexOf(s)});notes.sort((a,b)=>(a.x??1e9)-(b.x??1e9));render()});
+$('clear').onclick=()=>{stop();notes=[];pairSelection=[];barTimingEnabled=false;render();setStatus('已清除音符。')};$('add').onclick=()=>{notes.push({pitch:60,duration:1,x:null,y:null,source:'手動',staffIndex:0});render()};
 function stop(){playToken++;playing=false;oscillators.forEach(o=>{try{o.stop()}catch(e){}});oscillators=[];$('bar').style.width='0%'}$('stop').onclick=stop;
-$('play').onclick=async()=>{if(!notes.length){setStatus('請先辨識或新增音符。');return}stop();audio??=new (window.AudioContext||window.webkitAudioContext)();await audio.resume();let token=playToken;playing=true;let bpm=Math.max(30,Math.min(240,Number($('bpm').value)||90));let sec=60/bpm,t=audio.currentTime+.08;let total=notes.reduce((s,n)=>s+Math.max(1/12,Number(n.duration)||1),0)*sec;let start=t;notes.forEach(n=>{let len=Math.max(1/12,Number(n.duration)||1)*sec;let osc=audio.createOscillator(),gain=audio.createGain();osc.type=$('wave').value;osc.frequency.value=440*Math.pow(2,(n.pitch-69)/12);gain.gain.setValueAtTime(.0001,t);gain.gain.exponentialRampToValueAtTime(.16,t+.018);gain.gain.setValueAtTime(.16,Math.max(t+.02,t+len-.05));gain.gain.exponentialRampToValueAtTime(.0001,t+len);osc.connect(gain).connect(audio.destination);osc.start(t);osc.stop(t+len+.02);oscillators.push(osc);t+=len});function tick(){if(token!==playToken)return;let f=Math.min(1,(audio.currentTime-start)/total);$('bar').style.width=`${Math.max(0,f)*100}%`;if(f<1)requestAnimationFrame(tick);else{playing=false;oscillators=[]}}requestAnimationFrame(tick)};
-function download(name,content,type){let blob=new Blob([content],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}$('json').onclick=()=>download('score-notes.json',JSON.stringify({title:'我的樂譜',bpm:Number($('bpm').value),notes},null,2),'application/json');$('import').onchange=async e=>{try{let obj=JSON.parse(await e.target.files[0].text());if(!Array.isArray(obj.notes))throw Error('缺少 notes 陣列');notes=obj.notes.slice(0,1000).map(n=>({pitch:Math.max(21,Math.min(108,Math.round(Number(n.pitch)||60))),duration:Math.max(1/12,Math.min(4,Number(n.duration)||1)),x:Number.isFinite(n.x)?n.x:null,y:Number.isFinite(n.y)?n.y:null,source:'匯入'}));if(obj.bpm)$('bpm').value=obj.bpm;render();setStatus(`已匯入 ${notes.length} 個音符。`)}catch(err){setStatus('匯入失敗：'+err.message)}};
-function vlq(n){let a=[n&127];while(n>>=7)a.unshift((n&127)|128);return a}function chunk(s,b){let a=[...s].map(c=>c.charCodeAt(0)),l=b.length;return [...a,(l>>>24)&255,(l>>>16)&255,(l>>>8)&255,l&255,...b]}$('midi').onclick=()=>{let bpm=Math.max(30,Math.min(240,Number($('bpm').value)||90)),mpq=Math.round(60000000/bpm),ev=[0,255,81,3,(mpq>>16)&255,(mpq>>8)&255,mpq&255];for(let n of notes){let ticks=Math.max(1,Math.round((Number(n.duration)||1)*480)),p=Math.max(0,Math.min(127,n.pitch));ev.push(0,0x90,p,90,...vlq(ticks),0x80,p,0)}ev.push(0,255,47,0);let bytes=[...chunk('MThd',[0,0,0,6,0,0,0,1,1,224]),...chunk('MTrk',ev)];download('score.mid',new Uint8Array(bytes),'audio/midi')};
+function playbackEvents(){
+ assignTiming();const mode=$('playMode').value;
+ let selected=notes.filter(n=>mode==='sync'||mode==='sequential'||(mode==='upper'?staffOf(n)%2===0:staffOf(n)%2===1));
+ if(mode==='sequential'){let t=0;return selected.map(n=>{let e={pitch:n.pitch,start:t,duration:Number(n.duration)||1};t+=e.duration;return e})}
+ return selected.map(n=>({pitch:n.pitch,start:Math.max(0,Number(n.startBeat)||0),duration:Math.max(1/12,Number(n.duration)||1)}));
+}
+$('play').onclick=async()=>{
+ if(!notes.length){setStatus('請先辨識或新增音符。');return}
+ stop();audio??=new (window.AudioContext||window.webkitAudioContext)();await audio.resume();
+ let token=playToken;playing=true;
+ let bpm=Math.max(30,Math.min(240,Number($('bpm').value)||90)),sec=60/bpm;
+ let events=playbackEvents();if(!events.length){setStatus('選取的譜表沒有音符。');return}
+ let start=audio.currentTime+.09,total=Math.max(...events.map(e=>e.start+e.duration))*sec;
+ for(const e of events){
+  let t=start+e.start*sec,len=e.duration*sec;
+  let osc=audio.createOscillator(),gain=audio.createGain();osc.type=$('wave').value;
+  osc.frequency.value=440*Math.pow(2,(e.pitch-69)/12);
+  const vol=Math.min(.13,.25/Math.sqrt(events.length>1?2:1));
+  gain.gain.setValueAtTime(.0001,t);gain.gain.exponentialRampToValueAtTime(vol,t+.018);
+  gain.gain.setValueAtTime(vol,Math.max(t+.019,t+len-.05));
+  gain.gain.exponentialRampToValueAtTime(.0001,t+len);
+  osc.connect(gain).connect(audio.destination);osc.start(t);osc.stop(t+len+.025);oscillators.push(osc);
+ }
+ function tick(){if(token!==playToken)return;let f=Math.min(1,(audio.currentTime-start)/Math.max(.01,total));$('bar').style.width=`${Math.max(0,f)*100}%`;if(f<1)requestAnimationFrame(tick);else{playing=false;oscillators=[]}}
+ requestAnimationFrame(tick);
+};
+function download(name,content,type){let blob=new Blob([content],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}$('json').onclick=()=>download('score-notes.json',JSON.stringify({title:'我的樂譜',bpm:Number($('bpm').value),meter:$('meter').value,notes},null,2),'application/json');$('import').onchange=async e=>{try{let obj=JSON.parse(await e.target.files[0].text());if(!Array.isArray(obj.notes))throw Error('缺少 notes 陣列');pairSelection=[];notes=obj.notes.slice(0,1000).map(n=>({pitch:Math.max(21,Math.min(108,Math.round(Number(n.pitch)||60))),duration:Math.max(1/12,Math.min(4,Number(n.duration)||1)),x:Number.isFinite(n.x)?n.x:null,y:Number.isFinite(n.y)?n.y:null,source:'匯入',staffIndex:Number.isInteger(n.staffIndex)?n.staffIndex:0,startBeat:Number.isFinite(Number(n.startBeat))?Number(n.startBeat):0,timeManual:Number.isFinite(Number(n.startBeat))}));if(obj.meter&&[...$('meter').options].some(o=>o.value===obj.meter))$('meter').value=obj.meter;if(obj.bpm)$('bpm').value=obj.bpm;render();setStatus(`已匯入 ${notes.length} 個音符。`)}catch(err){setStatus('匯入失敗：'+err.message)}};
+function vlq(n){let a=[n&127];while(n>>=7)a.unshift((n&127)|128);return a}function chunk(s,b){let a=[...s].map(c=>c.charCodeAt(0)),l=b.length;return [...a,(l>>>24)&255,(l>>>16)&255,(l>>>8)&255,l&255,...b]}$('midi').onclick=()=>{
+ const bpm=Math.max(30,Math.min(240,Number($('bpm').value)||90)),mpq=Math.round(60000000/bpm);
+ let events=[{tick:0,priority:0,bytes:[255,81,3,(mpq>>16)&255,(mpq>>8)&255,mpq&255]}];
+ for(const e of playbackEvents()){
+  const p=Math.max(0,Math.min(127,Math.round(e.pitch))),on=Math.max(0,Math.round(e.start*480)),off=Math.max(on+1,Math.round((e.start+e.duration)*480));
+  events.push({tick:on,priority:2,bytes:[0x90,p,90]},{tick:off,priority:1,bytes:[0x80,p,0]});
+ }
+ events.sort((a,b)=>a.tick-b.tick||a.priority-b.priority);
+ let track=[],prev=0;for(const e of events){track.push(...vlq(e.tick-prev),...e.bytes);prev=e.tick}
+ track.push(0,255,47,0);
+ let bytes=[...chunk('MThd',[0,0,0,6,0,0,0,1,1,224]),...chunk('MTrk',track)];
+ download('score-synchronized.mid',new Uint8Array(bytes),'audio/midi');
+};
 </script></body></html>
